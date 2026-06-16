@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#5c1370">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Liz Ops">
+<title>Floristería Liz — Centro Operativo</title>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.23.9/babel.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Fuentes cargadas en el head */
+:root{--liz:#c58feb;--deep:#5c1370;--mid:#a24cb3;--light:#f5e8ff;--pale:#fdf8ff;--bd:rgba(197,143,235,.2);--bd2:rgba(197,143,235,.38);--grad:linear-gradient(135deg,#5c1370 0%,#bf4dd9 100%);--text:#1a0a2e;--text2:#6b5a7e;--text3:#9880a1}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overscroll-behavior:none}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--pale);color:var(--text);-webkit-text-size-adjust:100%}
+button,input,select,textarea{font-family:inherit}
+.app{min-height:100vh;display:flex;flex-direction:column}
+.main{max-width:640px;margin:0 auto;padding:18px 16px 50px;width:100%;flex:1}
+
+/* ── PIN ── */
+.pin-screen{min-height:100vh;background:radial-gradient(ellipse at 50% 0%,#edd6ff,var(--pale) 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px}
+.pin-logo{height:60px;margin-bottom:14px}
+.pin-brand{font-family:'Playfair Display',serif;font-size:28px;color:var(--deep);font-weight:700;margin-bottom:3px}
+.pin-sub{font-size:11px;color:var(--mid);letter-spacing:2px;text-transform:uppercase;font-weight:600;margin-bottom:32px}
+.pin-dots{display:flex;gap:14px;margin-bottom:10px}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:var(--bd2);transition:background .15s}
+.pin-dot.filled{background:var(--deep)}
+.pin-err{font-size:13px;color:#dc2626;font-weight:600;height:20px;margin-bottom:8px}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:252px;margin-top:18px}
+.key-btn{background:#fff;border:1px solid var(--bd2);border-radius:16px;padding:17px;font-size:22px;font-weight:600;color:var(--text);cursor:pointer;transition:all .1s;box-shadow:0 2px 10px rgba(92,19,112,.05)}
+.key-btn:active{background:var(--light);transform:scale(.93)}
+.key-btn.del{font-size:18px;color:var(--text3)}
+.key-btn.empty{visibility:hidden}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-9px)}40%,80%{transform:translateX(9px)}}
+.pin-shake{animation:shake .4s ease}
+
+/* ── PIN Secretaria (segunda capa) ── */
+.sec-pin-wrap{min-height:100vh;background:linear-gradient(160deg,#1a0a2e 0%,#3d1060 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px}
+.sec-pin-badge{background:rgba(197,143,235,.15);border:1px solid rgba(197,143,235,.3);border-radius:20px;padding:10px 20px;font-size:12px;font-weight:700;color:var(--liz);letter-spacing:1px;text-transform:uppercase;margin-bottom:24px}
+.sec-pin-title{font-family:'Playfair Display',serif;font-size:26px;color:#fff;font-weight:700;text-align:center;margin-bottom:4px}
+.sec-pin-sub{font-size:12px;color:rgba(255,255,255,.5);text-align:center;margin-bottom:32px}
+.sec-pin-dots-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:8px}
+.sec-pin-dots{display:flex;gap:14px}
+.sec-pin-dot{width:14px;height:14px;border-radius:50%;background:rgba(197,143,235,.25);transition:background .15s;border:1px solid rgba(197,143,235,.4)}
+.sec-pin-dot.filled{background:var(--liz);border-color:var(--liz);box-shadow:0 0 10px rgba(197,143,235,.5)}
+.sec-pin-err{font-size:13px;color:#f87171;font-weight:600;height:20px}
+.sec-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:252px;margin-top:18px}
+.sec-key-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:17px;font-size:22px;font-weight:600;color:#fff;cursor:pointer;transition:all .1s}
+.sec-key-btn:active{background:rgba(197,143,235,.25);transform:scale(.93)}
+.sec-key-btn.del{font-size:18px;color:rgba(255,255,255,.5)}
+.sec-key-btn.empty{visibility:hidden}
+.sec-pin-back{background:none;border:none;color:rgba(255,255,255,.4);font-size:13px;cursor:pointer;margin-top:28px;padding:8px 16px;font-family:inherit;display:flex;align-items:center;gap:5px}
+.sec-pin-back:hover{color:rgba(255,255,255,.7)}
+.sec-pin-lock{font-size:48px;margin-bottom:16px}
+.loader{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(ellipse at 50% 0%,#edd6ff,var(--pale) 70%)}
+.loader-logo{height:56px;animation:breathe 2.5s ease-in-out infinite}
+@keyframes breathe{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(.95)}}
+.loader-title{font-family:'Playfair Display',serif;font-size:22px;color:var(--deep);font-weight:700}
+.spinner{width:32px;height:32px;border:3px solid var(--bd2);border-top-color:var(--deep);border-radius:50%;animation:spin .75s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-sub{font-size:13px;color:var(--text2);font-weight:500}
+
+/* ── Header ── */
+.hdr{background:var(--grad);padding:12px 18px;position:sticky;top:0;z-index:200;box-shadow:0 4px 24px rgba(92,19,112,.22)}
+.hdr-r{display:flex;justify-content:space-between;align-items:center;max-width:640px;margin:0 auto}
+.hdr-brand{display:flex;align-items:center;gap:11px}
+.hdr-logo{height:30px;filter:brightness(0) invert(1)}
+.hdr-name{font-family:'Playfair Display',serif;font-size:16px;color:rgba(255,255,255,.98);font-weight:700}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.7);margin-top:1px}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.hdr-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;box-shadow:0 0 8px rgba(74,222,128,.6)}
+.hdr-dot.off{background:#f87171;box-shadow:0 0 8px rgba(248,113,113,.5)}
+.hdr-exit{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.28);padding:7px 16px;border-radius:24px;cursor:pointer;font-size:12px;font-weight:600}
+
+/* ── Role selector ── */
+.role-wrap{min-height:100vh;background:radial-gradient(ellipse at 50% 0%,#edd6ff,var(--pale) 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 22px}
+.role-logo{height:64px;margin-bottom:14px}
+.role-brand{font-family:'Playfair Display',serif;font-size:28px;color:var(--deep);font-weight:700;text-align:center;margin-bottom:3px}
+.role-tagline{font-size:11px;color:var(--mid);letter-spacing:2px;text-transform:uppercase;font-weight:600;text-align:center;margin-bottom:40px}
+.role-ask{font-size:13px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;width:100%;max-width:390px}
+.role-btn{display:flex;align-items:center;gap:16px;background:rgba(255,255,255,.86);border:1px solid var(--bd2);border-radius:22px;padding:18px 20px;cursor:pointer;width:100%;max-width:390px;margin-bottom:12px;text-align:left;box-shadow:0 4px 20px rgba(92,19,112,.06);transition:transform .12s}
+.role-btn:active{transform:scale(.97)}
+.role-btn.kiosko{border-color:#f59e0b;background:rgba(255,243,208,.9)}
+.role-ic{font-size:30px;min-width:38px}
+.role-name{font-size:15px;font-weight:700;color:var(--deep)}
+.role-name.kiosko{color:#92400e}
+.role-desc{font-size:12px;color:var(--text3);margin-top:3px;font-weight:400;line-height:1.4}
+.back-btn,.dt-back{background:none;border:none;color:var(--deep);font-size:14px;cursor:pointer;font-weight:700;padding:4px 0 14px;display:inline-flex;align-items:center;gap:5px}
+.person-btn{display:block;background:rgba(255,255,255,.86);border:1px solid var(--bd2);border-radius:16px;padding:14px 18px;cursor:pointer;width:100%;max-width:390px;margin-bottom:10px;font-size:14px;font-weight:600;color:var(--text);text-align:left}
+.person-btn:active{background:var(--light)}
+.person-btn.kiosko-person{border-color:#f59e0b;background:rgba(255,243,208,.9);color:#92400e}
+
+/* ── Banner ── */
+.banner{background:var(--grad);border-radius:24px;padding:20px;color:#fff;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 8px 28px rgba(92,19,112,.16)}
+.ban-l{font-size:10px;opacity:.88;text-transform:uppercase;letter-spacing:1.5px;font-weight:600;margin-bottom:6px}
+.ban-n{font-family:'Playfair Display',serif;font-size:38px;font-weight:700;line-height:1}
+.ban-s{font-size:12px;opacity:.75;margin-top:5px}
+.ban-btn{background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.38);border-radius:14px;padding:11px 18px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:4px;background:var(--light);border-radius:18px;padding:4px;margin-bottom:18px}
+.tab-btn{flex:1;padding:10px 14px;border:none;border-radius:14px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text3);background:transparent;transition:all .15s}
+.tab-btn.on{background:#fff;color:var(--deep);box-shadow:0 2px 10px rgba(92,19,112,.1)}
+
+/* ── Search ── */
+.search-wrap{position:relative;margin-bottom:14px}
+.search-in{width:100%;padding:12px 16px 12px 44px;border:1.5px solid var(--bd2);border-radius:16px;font-size:15px;color:var(--text);background:#fff;outline:none;transition:border-color .15s}
+.search-in:focus{border-color:var(--deep)}
+.search-ic{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:18px;opacity:.4;pointer-events:none}
+.search-clear{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:18px;cursor:pointer;opacity:.4;padding:4px}
+
+/* ── Filters ── */
+.day-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.chips{display:flex;gap:6px}
+.chip{background:#fff;border:1.5px solid var(--bd2);border-radius:24px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer}
+.chip.on{background:var(--deep);border-color:var(--deep);color:#fff}
+.btn-export{background:#065f46;color:#fff;border:none;border-radius:20px;padding:8px 15px;font-size:12px;font-weight:700;cursor:pointer}
+
+/* ── Stats ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.stat{background:#fff;border-radius:16px;padding:12px 6px;text-align:center;border:1px solid var(--bd)}
+.stat-n{font-size:22px;font-weight:800}
+.stat-l{font-size:9px;text-transform:uppercase;color:var(--text3);font-weight:600;margin-top:3px;letter-spacing:.3px}
+
+/* ── Section header ── */
+.sh{font-size:15px;font-weight:700;color:var(--text);margin:20px 0 12px;display:flex;align-items:center;gap:8px}
+.sh-cnt{background:#ef4444;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px}
+
+/* ── Status badge ── */
+.sbadge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;flex-shrink:0}
+.sdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.urgente-badge{background:#dc2626;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;display:inline-flex;align-items:center;gap:3px;margin-left:8px}
+
+/* ── Order card ── */
+.card{background:#fff;border-radius:22px;padding:16px;margin-bottom:12px;border:1px solid var(--bd);box-shadow:0 2px 16px rgba(92,19,112,.04);cursor:pointer;transition:transform .1s}
+.card:active{transform:scale(.98)}
+.card.urgente{border-color:#ef4444;box-shadow:0 0 0 2px rgba(239,68,68,.12)}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:8px}
+.card-client{font-size:16px;font-weight:700}
+.card-time{font-size:11px;color:var(--text3);margin-top:3px}
+.card-prod{display:flex;align-items:center;gap:12px;background:var(--light);padding:11px 13px;border-radius:16px;margin-bottom:10px}
+.card-prod-icon{width:48px;height:48px;border-radius:12px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.card-pname{font-size:14px;font-weight:700;color:var(--deep);line-height:1.3}
+.card-price{font-size:15px;color:var(--mid);font-weight:800;margin-top:3px}
+.card-meta{font-size:12px;color:var(--text3);line-height:1.7}
+.card-num{font-size:10px;color:var(--text3);font-weight:600;margin-top:4px}
+.card-link-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(92,19,112,.08);color:var(--deep);padding:3px 9px;border-radius:10px;font-size:11px;font-weight:600;text-decoration:none;margin-top:4px}
+.time-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:700}
+
+/* ── Form ── */
+.form-card{background:#fff;border-radius:22px;padding:18px;border:1px solid var(--bd);margin-bottom:14px}
+.f-l{font-size:11px;font-weight:700;color:var(--deep);text-transform:uppercase;letter-spacing:.5px;margin-top:14px;display:block}
+.f-l:first-child{margin-top:0}
+.f-i{width:100%;padding:12px 15px;border:1.5px solid var(--bd2);border-radius:14px;font-size:15px;color:var(--text);background:#fff;outline:none;margin-top:6px;transition:border-color .15s}
+.f-i:focus{border-color:var(--deep)}
+.f-s{width:100%;padding:12px 15px;border:1.5px solid var(--bd2);border-radius:14px;font-size:14px;color:var(--text);background:#fff;outline:none;margin-top:6px}
+.f-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--grad);color:#fff;font-size:11px;font-weight:800;margin-right:7px;flex-shrink:0}
+.pago-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.pago-btn{background:#fff;border:1.5px solid var(--bd2);border-radius:14px;padding:12px;cursor:pointer;text-align:center;font-size:13px;font-weight:600;color:var(--text2);transition:all .1s}
+.pago-btn.sel{border-color:var(--deep);background:var(--light);color:var(--deep)}
+.urgente-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-top:1px solid var(--bd);margin-top:14px}
+.toggle{position:relative;display:inline-block;width:48px;height:26px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#e5e7eb;border-radius:13px;transition:.3s}
+.toggle-slider:before{position:absolute;content:"";height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+input:checked + .toggle-slider{background:#dc2626}
+input:checked + .toggle-slider:before{transform:translateX(22px)}
+.num-pedido{font-size:11px;color:var(--text3);font-family:monospace;font-weight:600;background:var(--light);padding:4px 10px;border-radius:8px;margin-top:4px;display:inline-block}
+
+/* ── Buttons ── */
+.btn-p{background:var(--grad);color:#fff;border:none;border-radius:16px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;width:100%;margin-top:12px;box-shadow:0 6px 20px rgba(92,19,112,.22);display:block}
+.btn-g{background:linear-gradient(135deg,#059669,#10b981);color:#fff;border:none;border-radius:16px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;width:100%;margin-top:12px;display:block}
+.btn-b{background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;border:none;border-radius:16px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;width:100%;margin-top:12px;display:block}
+.btn-gh{background:var(--light);color:var(--deep);border:none;border-radius:14px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;width:100%;margin-top:10px;display:block}
+.btn-wa-share{background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:none;border-radius:14px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-web{display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#c084fc,#a855f7);color:#fff;border:none;border-radius:14px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;width:100%;margin-top:12px;text-decoration:none}
+.btn-maps{display:inline-flex;align-items:center;gap:6px;background:#e8f0fe;color:#1a73e8;padding:9px 14px;border-radius:12px;text-decoration:none;font-size:12px;font-weight:700;margin-top:8px}
+.btn-call{display:inline-flex;align-items:center;gap:6px;background:#dcfce7;color:#15803d;padding:9px 14px;border-radius:12px;text-decoration:none;font-size:12px;font-weight:700;margin-top:8px}
+.btn-wam{display:inline-flex;align-items:center;gap:6px;background:#dcfce7;color:#15803d;padding:9px 14px;border-radius:12px;text-decoration:none;font-size:12px;font-weight:700;margin-top:8px;margin-left:8px}
+.dg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.db{background:#fff;border:1.5px solid var(--bd2);border-radius:14px;padding:14px;cursor:pointer;text-align:center;font-size:13px;font-weight:600;color:var(--text)}
+
+/* ── Detail ── */
+.dt-hero{background:linear-gradient(180deg,#edd6ff,#fff);border-radius:24px;padding:24px 16px 20px;margin-bottom:16px;border:1px solid var(--bd);text-align:center}
+.dt-hero-icon{width:86px;height:86px;border-radius:22px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto}
+.dt-card{background:#fff;border-radius:22px;padding:18px;border:1px solid var(--bd);margin-bottom:14px}
+.dt-row{display:flex;gap:14px;align-items:flex-start;padding:10px 0;border-bottom:1px solid rgba(197,143,235,.1)}
+.dt-row:last-child{border-bottom:none}
+.dt-ic{font-size:16px;min-width:22px;margin-top:1px}
+.dt-k{font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:700;letter-spacing:.5px;margin-bottom:4px}
+.dt-v{font-size:14px;color:var(--text);font-weight:500;line-height:1.4}
+
+/* ── Photo ── */
+.ph-in{position:fixed;left:-9999px;top:-9999px;opacity:0}
+.ph-btn{background:#fff;border:2px dashed var(--liz);border-radius:18px;padding:18px;cursor:pointer;width:100%;margin-top:12px;font-size:14px;color:var(--deep);font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px}
+.ph-img{width:100%;border-radius:18px;margin-top:12px;max-height:240px;object-fit:cover}
+.ph-upload{background:#f3e8ff;border-radius:12px;padding:12px;margin-top:10px;font-size:13px;color:var(--deep);font-weight:600;display:flex;align-items:center;gap:8px}
+
+/* ── Evidence ── */
+.ev-section{background:#f0fdf4;border-radius:22px;padding:16px;border:1px solid #bbf7d0;margin-bottom:14px}
+.ev-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+.ev-card{background:#fff;padding:11px;border-radius:14px;border:1px solid #bbf7d0}
+.ev-btn-dl{display:block;text-align:center;text-decoration:none;border-radius:10px;padding:7px 10px;font-size:11px;font-weight:700;margin-top:8px;color:#fff}
+
+/* ── Task card ── */
+.tc{background:#fff;border-radius:24px;padding:18px;margin-bottom:14px;border:1px solid var(--bd);box-shadow:0 4px 16px rgba(92,19,112,.04)}
+.tc.urgente{border-color:#ef4444;box-shadow:0 0 0 2px rgba(239,68,68,.12)}
+.tc-top{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.tc-icon{width:68px;height:68px;border-radius:18px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.tc-info{background:var(--light);border-radius:14px;padding:13px;margin-bottom:12px}
+.tc-info-title{font-size:10px;color:var(--mid);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.tc-row{font-size:13px;color:var(--text2);margin-bottom:4px;line-height:1.4}
+.tc-note{background:#f0fdf4;border-radius:10px;padding:9px 11px;margin-top:7px;font-size:13px;color:#166534;line-height:1.4;font-style:italic}
+
+/* ── Stats panel ── */
+.stats-rev-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px}
+.stats-card{background:#fff;border-radius:20px;padding:16px;border:1px solid var(--bd)}
+.stats-card.accent{background:var(--grad);border:none}
+.prog-bar{height:7px;border-radius:4px;background:var(--light);overflow:hidden;flex:1}
+.prog-fill{height:100%;border-radius:4px;background:var(--grad);transition:width .6s ease}
+.florista-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.florista-row:last-child{margin-bottom:0}
+
+/* ── MEJORA 2: Historial del cliente ── */
+.history-card{background:linear-gradient(135deg,#fdf4ff,#f0e6ff);border-radius:20px;padding:16px;border:1px solid var(--bd2);margin-bottom:14px}
+.history-title{font-size:13px;font-weight:700;color:var(--deep);display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.history-vip{background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#fff;font-size:11px;font-weight:800;padding:3px 10px;border-radius:10px}
+.history-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(197,143,235,.15)}
+.history-row:last-child{border-bottom:none}
+.history-prod{font-size:13px;color:var(--text);font-weight:500}
+.history-date{font-size:11px;color:var(--text3)}
+.history-price{font-size:13px;color:var(--mid);font-weight:700}
+.history-empty{font-size:13px;color:var(--text3);text-align:center;padding:10px 0}
+
+/* ── MEJORA 3: Modo Kiosko ── */
+.kiosko-wrap{min-height:100vh;background:#1a0a2e;display:flex;flex-direction:column}
+.kiosko-hdr{background:var(--grad);padding:16px 20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.kiosko-hdr-brand{display:flex;align-items:center;gap:12px}
+.kiosko-logo{height:32px;filter:brightness(0) invert(1)}
+.kiosko-hdr-name{font-family:'Playfair Display',serif;font-size:18px;color:#fff;font-weight:700}
+.kiosko-hdr-sub{font-size:12px;color:rgba(255,255,255,.75);margin-top:2px}
+.kiosko-hdr-dot{width:9px;height:9px;border-radius:50%;background:#4ade80;box-shadow:0 0 10px rgba(74,222,128,.7)}
+.kiosko-body{flex:1;padding:16px;overflow-y:auto}
+.kiosko-counter{text-align:center;padding:16px 0 8px}
+.kiosko-counter-n{font-family:'Playfair Display',serif;font-size:52px;font-weight:700;color:#fff;line-height:1}
+.kiosko-counter-l{font-size:13px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.kiosko-card{background:#fff;border-radius:24px;padding:22px;margin-bottom:16px;border:1px solid rgba(255,255,255,.08);position:relative;overflow:hidden}
+.kiosko-card.urgente{border-color:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,.2)}
+.kiosko-card.new-pulse{animation:newPulse .8s ease}
+@keyframes newPulse{0%{transform:scale(1)}30%{transform:scale(1.02)}60%{transform:scale(.99)}100%{transform:scale(1)}}
+.kiosko-status-bar{position:absolute;top:0;left:0;right:0;height:5px;border-radius:24px 24px 0 0}
+.kiosko-prod-name{font-size:20px;font-weight:800;color:var(--text);margin-bottom:6px;line-height:1.2;margin-top:4px}
+.kiosko-client{font-size:16px;color:var(--text2);font-weight:600;margin-bottom:4px}
+.kiosko-detail{font-size:14px;color:var(--text3);margin-bottom:10px;line-height:1.6}
+.kiosko-note{background:#f0fdf4;border-radius:12px;padding:10px 14px;font-size:14px;color:#15803d;line-height:1.4;font-style:italic;margin-bottom:12px}
+.kiosko-btn{border:none;border-radius:16px;padding:18px;font-size:17px;font-weight:800;cursor:pointer;width:100%;margin-top:8px;letter-spacing:.2px}
+.kiosko-btn.init{background:var(--grad);color:#fff;box-shadow:0 6px 20px rgba(92,19,112,.3)}
+.kiosko-btn.photo{background:linear-gradient(135deg,#059669,#10b981);color:#fff;box-shadow:0 6px 20px rgba(5,150,105,.3)}
+.kiosko-btn.done{background:#dcfce7;color:#065f46}
+.kiosko-upload{background:#f3e8ff;border-radius:12px;padding:12px;font-size:14px;color:var(--deep);font-weight:600;display:flex;align-items:center;gap:8px;margin-top:8px}
+.kiosko-photo-prev{width:100%;border-radius:14px;margin-top:10px;max-height:220px;object-fit:cover}
+.kiosko-done-badge{background:#dcfce7;border-radius:14px;padding:14px;text-align:center;font-size:16px;font-weight:700;color:#065f46;margin-top:8px}
+.kiosko-empty{text-align:center;padding:60px 20px}
+.kiosko-empty-ic{font-size:60px;display:block;margin-bottom:16px}
+.kiosko-empty-txt{color:rgba(255,255,255,.5);font-size:16px;line-height:1.7}
+.kiosko-exit{display:block;text-align:center;color:rgba(255,255,255,.25);font-size:12px;padding:20px;cursor:pointer;border:none;background:none;width:100%;margin-top:8px}
+.kiosko-exit:active{color:rgba(255,255,255,.6)}
+
+/* ── Sonido alert (para modo kiosko cuando llega pedido nuevo) ── */
+.kiosko-new-alert{position:fixed;top:0;left:0;right:0;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;padding:18px 20px;text-align:center;font-size:17px;font-weight:800;z-index:999;animation:slideDown .35s ease}
+@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+
+/* ── Toast ── */
+.toast{position:fixed;top:72px;left:50%;transform:translateX(-50%);background:var(--deep);color:#fff;padding:11px 24px;border-radius:30px;font-size:13px;font-weight:600;z-index:999;box-shadow:0 8px 28px rgba(92,19,112,.28);white-space:nowrap;pointer-events:none;animation:popUp .2s ease}
+@keyframes popUp{from{opacity:0;transform:translateX(-50%) translateY(-8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.sync{position:fixed;bottom:18px;right:16px;background:#065f46;color:#fff;padding:8px 14px;border-radius:24px;font-size:11px;font-weight:600;z-index:50;display:flex;align-items:center;gap:5px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.empty{text-align:center;padding:50px 20px}
+.empty-ic{font-size:52px;margin-bottom:14px;display:block}
+.empty-txt{color:var(--text3);font-size:14px;line-height:1.7}
+.fade{animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+
+/* ══ MODO TV — Pantalla de producción para televisor ══ */
+.tv-wrap{position:fixed;inset:0;background:#080415;display:flex;flex-direction:column;overflow:hidden;font-family:'Inter',sans-serif;z-index:500}
+.tv-new-alert{position:absolute;top:0;left:0;right:0;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;padding:1.4vw;text-align:center;font-size:2.2vw;font-weight:900;z-index:100;animation:tvSlideDown .3s ease;letter-spacing:.5px}
+@keyframes tvSlideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+.tv-hdr{background:var(--grad);padding:.9vw 2vw;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;box-shadow:0 4px 30px rgba(0,0,0,.5)}
+.tv-brand{display:flex;align-items:center;gap:1.2vw}
+.tv-logo{height:3vw;filter:brightness(0) invert(1)}
+.tv-hdr-name{font-family:'Playfair Display',serif;font-size:1.9vw;color:#fff;font-weight:700}
+.tv-hdr-sub{font-size:.8vw;color:rgba(255,255,255,.6);margin-top:.1vw;text-transform:uppercase;letter-spacing:1px}
+.tv-clock{font-family:'Playfair Display',serif;font-size:4.2vw;color:#fff;font-weight:700;letter-spacing:.05em;text-shadow:0 0 40px rgba(197,143,235,.6);line-height:1}
+.tv-stats-bar{background:rgba(255,255,255,.05);padding:.55vw 2vw;display:flex;align-items:center;gap:2.5vw;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.07)}
+.tv-stat-item{display:flex;align-items:center;gap:.5vw;font-size:.95vw}
+.tv-stat-dot{width:.85vw;height:.85vw;border-radius:50%;flex-shrink:0}
+.tv-stat-lbl{color:rgba(255,255,255,.5);font-weight:500}
+.tv-stat-n{color:#fff;font-weight:800;font-size:1.25vw;margin-left:.15vw}
+.tv-pager{margin-left:auto;display:flex;align-items:center;gap:.5vw}
+.tv-pager-dot{width:.55vw;height:.55vw;border-radius:50%;background:rgba(255,255,255,.2);transition:background .4s}
+.tv-pager-dot.on{background:var(--liz)}
+.tv-grid{flex:1;display:grid;gap:1vw;padding:1vw 1.8vw;overflow:hidden;align-content:start}
+.tv-g-1{grid-template-columns:1fr;max-width:35vw;margin:0 auto;width:100%}
+.tv-g-2{grid-template-columns:1fr 1fr}
+.tv-g-3,.tv-g-4,.tv-g-5,.tv-g-6{grid-template-columns:repeat(3,1fr)}
+.tv-card{background:rgba(255,255,255,.05);border-radius:.9vw;padding:1.2vw 1.4vw;border:1px solid rgba(255,255,255,.09);position:relative;overflow:hidden;display:flex;flex-direction:column;gap:.45vw}
+.tv-card.tv-urg{border-color:rgba(239,68,68,.5);background:rgba(239,68,68,.07);animation:tvUrgPulse 2.5s ease-in-out infinite}
+@keyframes tvUrgPulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}50%{box-shadow:0 0 0 .4vw rgba(239,68,68,.15)}}
+.tv-card.tv-listo{border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.06)}
+.tv-card.tv-en_camino{border-color:rgba(59,130,246,.3);background:rgba(59,130,246,.05)}
+.tv-status-strip{position:absolute;top:0;left:0;right:0;height:.28vw}
+.tv-card-head{display:flex;justify-content:space-between;align-items:center;margin-top:.15vw}
+.tv-badge{display:inline-flex;align-items:center;gap:.4vw;padding:.3vw .85vw;border-radius:2vw;font-size:.72vw;font-weight:800;letter-spacing:.3px}
+.tv-urg-pill{background:#dc2626;color:#fff;font-size:.68vw;font-weight:900;padding:.28vw .75vw;border-radius:.7vw;animation:tvUrgPulse 1.2s ease-in-out infinite}
+.tv-prod-name{font-size:1.4vw;font-weight:800;color:#fff;line-height:1.2}
+.tv-card-info{display:grid;grid-template-columns:1fr 1fr;gap:.28vw .7vw}
+.tv-info-row{font-size:.82vw;color:rgba(255,255,255,.6);display:flex;align-items:center;gap:.3vw}
+.tv-info-row strong{color:rgba(255,255,255,.9);font-weight:700}
+.tv-note-tv{font-size:.75vw;color:rgba(255,255,255,.42);font-style:italic;background:rgba(255,255,255,.04);padding:.38vw .7vw;border-radius:.5vw}
+.tv-timer{display:inline-flex;align-items:center;gap:.4vw;font-size:.82vw;font-weight:700;padding:.32vw .75vw;border-radius:.55vw;width:fit-content;margin-top:.1vw}
+.tv-timer.running{color:#f59e0b;background:rgba(245,158,11,.12)}
+.tv-timer.done{color:#22c55e;background:rgba(34,197,94,.12)}
+.tv-done-bar{background:rgba(34,197,94,.07);border-top:1px solid rgba(34,197,94,.14);padding:.55vw 2vw;display:flex;align-items:center;gap:1.2vw;flex-shrink:0;overflow:hidden}
+.tv-done-lbl{font-size:.82vw;color:#22c55e;font-weight:700;white-space:nowrap;flex-shrink:0}
+.tv-done-item{font-size:.78vw;color:rgba(255,255,255,.55);background:rgba(34,197,94,.09);padding:.24vw .7vw;border-radius:.5vw;white-space:nowrap;flex-shrink:0}
+.tv-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5vw}
+.tv-empty-ic{font-size:7vw}
+.tv-empty-txt{font-size:1.8vw;color:rgba(255,255,255,.3);font-weight:600}
+.tv-exit-btn{position:fixed;bottom:.7vw;right:.7vw;background:rgba(255,255,255,.05);color:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.08);border-radius:.5vw;padding:.4vw .85vw;font-size:.75vw;cursor:pointer;font-family:inherit;z-index:200}
+.tv-exit-btn:active{background:rgba(255,255,255,.15);color:#fff}
+.role-btn.tv{border-color:#1d4ed8;background:rgba(219,234,254,.9)}
+.role-name.tv{color:#1e40af}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+
+/* ══════════════════════════════════════════════════
+   FIREBASE
+══════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyAeTNmHOqF0Lap56M-QGxjWpew437PG46M",
+  authDomain: "floristerializ-ops.firebaseapp.com",
+  projectId: "floristerializ-ops",
+  storageBucket: "floristerializ-ops.firebasestorage.app",
+  messagingSenderId: "141584475536",
+  appId: "1:141584475536:web:b38341cc2a97bb73e2bf15"
+};
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db      = firebase.firestore();
+const storage = firebase.storage();
+db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+
+/* ══════════════════════════════════════════════════
+   CONFIGURACIÓN — Cambia los PINs aquí
+══════════════════════════════════════════════════ */
+const APP_PIN = "202412";  // PIN global — todos lo necesitan para entrar
+const SEC_PIN = "111111";  // PIN de Secretaria — cámbialo por el que quieras (6 dígitos)
+
+/* ══════════════════════════════════════════════════
+   CONSTANTES
+══════════════════════════════════════════════════ */
+const LIZ_LOGO   = "https://floristerializ.com/data/floristeria-liz-log-n3.webp";
+const DECORATORS = ["JORGE","SILVIO","JOSE","KEVIN","INVITADO"];
+const DRIVERS    = ["JEISON","EDISON","GAFAS","INVITADO"];
+const PAGOS      = ["Transferencia","Contraentrega","Efectivo","Tarjeta"];
+const PAGO_IC    = { Transferencia:"📲", Contraentrega:"📦", Efectivo:"💵", Tarjeta:"💳" };
+
+const SC = {
+  pendiente:     { label:"Pendiente",   color:"#92400e", bg:"#fef3c7", dot:"#f59e0b" },
+  en_produccion: { label:"En Taller",   color:"#5c1370", bg:"#f3e8ff", dot:"#c58feb" },
+  listo:         { label:"Listo ✓",     color:"#065f46", bg:"#dcfce7", dot:"#22c55e" },
+  en_camino:     { label:"En Ruta 🛵",  color:"#1e40af", bg:"#dbeafe", dot:"#3b82f6" },
+  entregado:     { label:"Entregado ✓", color:"#065f46", bg:"#d1fae5", dot:"#10b981" },
+};
+const STATUS_ORDER = ["pendiente","en_produccion","listo","en_camino","entregado"];
+
+/* ══════════════════════════════════════════════════
+   UTILIDADES
+══════════════════════════════════════════════════ */
+const COP = n => "$" + Number(n).toLocaleString("es-CO");
+const gmap = a => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a + ", Pereira, Risaralda, Colombia")}`;
+const tel  = p => `tel:+57${p.replace(/\D/g,"")}`;
+const wa   = p => `https://wa.me/57${p.replace(/\D/g,"")}`;
+const formatTime = ms => { if(!ms||ms<0) return "0 min"; const m=Math.floor(ms/60000); return m<60?m+" min":Math.floor(m/60)+"h "+(m%60)+"m"; };
+const isToday = ts => { const d=new Date(ts),t=new Date(); return d.getDate()===t.getDate()&&d.getMonth()===t.getMonth()&&d.getFullYear()===t.getFullYear(); };
+const isYesterday = ts => { const d=new Date(ts),y=new Date(); y.setDate(y.getDate()-1); return d.getDate()===y.getDate()&&d.getMonth()===y.getMonth()&&d.getFullYear()===y.getFullYear(); };
+const genOrderNum = () => { const d=new Date(); const dt=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`; return `LIZ-${dt}-${Math.floor(Math.random()*900)+100}`; };
+const shareWA = order => {
+  const cfg = SC[order.status]||SC.pendiente;
+  const msg = [`🌸 *Floristería Liz* — Actualización de pedido`,``,`Hola ${order.clientName}! El estado de tu arreglo:`,``,`📦 *${order.productName}*`,`💰 ${COP(order.price||0)}`,`📍 ${order.clientAddress}`,`⏰ ${order.deliveryTime||"Flexible"}`,``,`Estado: *${cfg.label}*`,``,`Gracias por elegir Floristería Liz 💐`].join("\n");
+  window.open(`https://wa.me/57${(order.clientPhone||"").replace(/\D/g,"")}?text=${encodeURIComponent(msg)}`,"_blank");
+};
+const uploadPhoto = async (b64, orderId, type) => {
+  const ref = storage.ref(`pedidos/${orderId}/${type}_${Date.now()}.jpg`);
+  await ref.putString(b64,"data_url");
+  return ref.getDownloadURL();
+};
+
+/* ══════════════════════════════════════════════════
+   MEJORA 1: SONIDO — Chime agradable para el taller
+   Tres tonos: "new" (nuevo pedido), "done" (listo), "alert" (urgente)
+══════════════════════════════════════════════════ */
+function playChime(type = "new") {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const patterns = {
+      new:   [[523.25,0],[659.25,.16],[783.99,.32]],  // Do-Mi-Sol (bienvenida)
+      done:  [[783.99,0],[659.25,.16],[523.25,.32]],  // Sol-Mi-Do (completado)
+      alert: [[880,0],[880,.22],[1046.5,.44]],         // La-La-Do (urgente)
+    };
+    (patterns[type]||patterns.new).forEach(([freq,delay]) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = "sine"; osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime+delay);
+      gain.gain.linearRampToValueAtTime(.22, ctx.currentTime+delay+.05);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime+delay+.38);
+      osc.start(ctx.currentTime+delay);
+      osc.stop(ctx.currentTime+delay+.5);
+    });
+  } catch(e) { /* Navegador sin audio */ }
+}
+
+
+
+
+/* ══════════════════════════════════════════════════
+   PIN DE SECRETARIA — Segunda capa de seguridad
+   Solo aparece cuando alguien elige el rol Secretaria
+══════════════════════════════════════════════════ */
+function SecPINScreen({ onSuccess, onBack }) {
+  const [pin, setPin]   = React.useState("");
+  const [err, setErr]   = React.useState(false);
+  const [shk, setShk]   = React.useState(false);
+  const [tries, setTries] = React.useState(0);
+
+  const add = d => {
+    if (pin.length >= 6) return;
+    const np = pin + d;
+    setPin(np);
+    if (np.length === 6) {
+      setTimeout(() => {
+        if (np === SEC_PIN) {
+          sessionStorage.setItem("liz-sec-ok", "1");
+          onSuccess();
+        } else {
+          const t = tries + 1;
+          setTries(t);
+          setErr(true); setShk(true); setPin("");
+          setTimeout(() => { setErr(false); setShk(false); }, 1600);
+        }
+      }, 200);
+    }
+  };
+  const del = () => setPin(p => p.slice(0, -1));
+
+  return (
+    <div className="sec-pin-wrap">
+      <div className="sec-pin-lock">🔐</div>
+      <div className="sec-pin-badge">Acceso Administración</div>
+      <div className="sec-pin-title">Floristería Liz</div>
+      <div className="sec-pin-sub">Ingresa el PIN de Secretaria</div>
+
+      <div className="sec-pin-dots-wrap">
+        <div className={"sec-pin-dots" + (shk ? " pin-shake" : "")}>
+          {[0,1,2,3,4,5].map(i => (
+            <div key={i} className={"sec-pin-dot" + (pin.length > i ? " filled" : "")} />
+          ))}
+        </div>
+        <div className="sec-pin-err">
+          {err ? `PIN incorrecto${tries >= 3 ? " — Habla con la administración" : ""}` : ""}
+        </div>
+      </div>
+
+      <div className="sec-keypad">
+        {[1,2,3,4,5,6,7,8,9].map(k => (
+          <button key={k} type="button" className="sec-key-btn" onClick={() => add(k + "")}>{k}</button>
+        ))}
+        <button type="button" className="sec-key-btn empty" disabled></button>
+        <button type="button" className="sec-key-btn" onClick={() => add("0")}>0</button>
+        <button type="button" className="sec-key-btn del" onClick={del}>⌫</button>
+      </div>
+
+      <button type="button" className="sec-pin-back" onClick={onBack}>
+        ← Volver al selector de rol
+      </button>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   PIN GLOBAL
+══════════════════════════════════════════════════ */
+function PINScreen({ onSuccess }) {
+  const [pin,setPin]=React.useState(""); const [err,setErr]=React.useState(false); const [shk,setShk]=React.useState(false);
+  const add = d => {
+    if(pin.length>=6) return; const np=pin+d; setPin(np);
+    if(np.length===6) setTimeout(()=>{
+      if(np===APP_PIN){sessionStorage.setItem("liz-pin-ok","1");onSuccess();}
+      else{setErr(true);setShk(true);setPin("");setTimeout(()=>{setErr(false);setShk(false);},1600);}
+    },200);
+  };
+  const del = ()=>setPin(p=>p.slice(0,-1));
+  return (
+    <div className="pin-screen">
+      
+      <img src={LIZ_LOGO} className="pin-logo" onError={e=>e.target.style.display="none"} alt="" />
+      <div className="pin-brand">Floristería Liz</div>
+      <div className="pin-sub">Centro Operativo</div>
+      <div style={{fontSize:13,color:"var(--text2)",fontWeight:600,marginBottom:16}}>Ingresa el PIN de acceso</div>
+      <div className={"pin-dots"+(shk?" pin-shake":"")}>
+        {[0,1,2,3,4,5].map(i=><div key={i} className={"pin-dot"+(pin.length>i?" filled":"")}/>)}
+      </div>
+      <div className="pin-err">{err?"PIN incorrecto. Intenta de nuevo.":""}</div>
+      <div className="keypad">
+        {[1,2,3,4,5,6,7,8,9].map(k=><button key={k} type="button" className="key-btn" onClick={()=>add(k+"")}>{k}</button>)}
+        <button type="button" className="key-btn empty" disabled></button>
+        <button type="button" className="key-btn" onClick={()=>add("0")}>0</button>
+        <button type="button" className="key-btn del" onClick={del}>⌫</button>
+      </div>
+      <div style={{marginTop:24,fontSize:11,color:"var(--text3)"}}>Pregunta el PIN al administrador</div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   SELECTOR DE ROL — con opción Kiosko
+══════════════════════════════════════════════════ */
+function RoleSel({ onSel }) {
+  const [step,setStep]=React.useState("role"); const [role,setRole]=React.useState(null); const [kiosko,setKiosko]=React.useState(false);
+  if(step==="person"){
+    const list=role==="decorator"?DECORATORS:DRIVERS;
+    return(
+      <div className="role-wrap">
+        <img src={LIZ_LOGO} className="role-logo" onError={e=>e.target.style.display="none"} alt=""/>
+        <div className="role-brand">Floristería Liz</div>
+        <div className="role-tagline" style={{marginBottom:24}}>{kiosko?"🖥️ Modo Kiosko":role==="decorator"?"Taller":"Ruta"}</div>
+        <button type="button" className="back-btn" style={{width:"100%",maxWidth:390}} onClick={()=>{setStep("role");setKiosko(false);}}>← Volver</button>
+        <div className="role-ask">¿Quién está en el taller hoy?</div>
+        {list.map(p=>(
+          <button key={p} type="button" className={"person-btn"+(kiosko?" kiosko-person":"")} onClick={()=>onSel(kiosko?"kiosko":role,p)}>
+            {kiosko?"🖥️ ":role==="decorator"?"✂️ ":"🛵 "}{p}
+          </button>
+        ))}
+      </div>
+    );
+  }
+  return(
+    <div className="role-wrap">
+      <img src={LIZ_LOGO} className="role-logo" onError={e=>e.target.style.display="none"} alt=""/>
+      <div className="role-brand">Floristería Liz</div>
+      <div className="role-tagline">Centro Operativo</div>
+      <div className="role-ask">¿Cuál es tu rol hoy?</div>
+      {[
+        {ic:"💼",name:"Secretaria / Ventas",   desc:"Registrar pedidos · Control general · Estadísticas",fn:()=>onSel("secretary","Central")},
+        {ic:"✂️",name:"Taller de Floristas",  desc:"Ver mis arreglos · Fotografiar · Marcar listos",     fn:()=>{setRole("decorator");setStep("person");}},
+        {ic:"🛵",name:"Equipo de Ruta",        desc:"Domicilios asignados · Navegar · Confirmar entregas",fn:()=>{setRole("driver");setStep("person");}},
+      ].map(r=>(
+        <button key={r.name} type="button" className="role-btn" onClick={r.fn}>
+          <span className="role-ic">{r.ic}</span><div><div className="role-name">{r.name}</div><div className="role-desc">{r.desc}</div></div>
+        </button>
+      ))}
+      {/* Modo Kiosko — tablet del taller */}
+      <button type="button" className="role-btn kiosko" onClick={()=>{setRole("decorator");setKiosko(true);setStep("person");}}>
+        <span className="role-ic">🖥️</span>
+        <div>
+          <div className="role-name kiosko">Modo Kiosko — Taller</div>
+          <div className="role-desc">Pantalla grande para la tablet del taller · Sin PIN de salida</div>
+        </div>
+      </button>
+      {/* Modo TV — televisor del área de producción */}
+      <button type="button" className="role-btn tv" onClick={()=>onSel("tv","TV")}>
+        <span className="role-ic">📺</span>
+        <div>
+          <div className="role-name tv">Modo TV — Producción</div>
+          <div className="role-desc">Panel general para el televisor · Todos los pedidos en tiempo real</div>
+        </div>
+      </button>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   APP PRINCIPAL
+══════════════════════════════════════════════════ */
+function FloristeriaLizApp() {
+  const [pinOk,     setPinOk]     = React.useState(sessionStorage.getItem("liz-pin-ok")==="1");
+  const [secPinOk,  setSecPinOk]  = React.useState(sessionStorage.getItem("liz-sec-ok")==="1");
+  const [loading,   setLoading]   = React.useState(true);
+  const [role,      setRole]      = React.useState(null);
+  const [user,      setUser]      = React.useState(null);
+  const [orders,    setOrders]    = React.useState([]);
+  const [view,      setView]      = React.useState("list");
+  const [selOrd,    setSelOrd]    = React.useState(null);
+  const [toast,     setToast]     = React.useState(null);
+  const [syncing,   setSyncing]   = React.useState(true);
+  const [connected, setConnected] = React.useState(true);
+  /* MEJORA 1 SONIDO: Para detectar pedidos nuevos */
+  const prevRef = React.useRef([]);
+
+  React.useEffect(()=>{
+    if(document.querySelector('link[rel="manifest"]')) return;
+    const m={name:"Floristería Liz — Ops",short_name:"Liz Ops",theme_color:"#5c1370",background_color:"#fdf8ff",display:"standalone",orientation:"portrait",start_url:"/",icons:[{src:"https://floristerializ.com/data/cropped-boton-liz-270x270.png",sizes:"270x270",type:"image/png"}]};
+    const l=document.createElement("link"); l.rel="manifest"; l.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:"application/json"})); document.head.appendChild(l);
+  },[]);
+
+  React.useEffect(()=>{
+    const unsub=db.collection("pedidos").orderBy("createdAt","desc").onSnapshot(
+      snap=>{
+        const newOrds=snap.docs.map(d=>({id:d.id,...d.data()}));
+        /* MEJORA 1 SONIDO: Detectar pedidos nuevos asignados al florista actual */
+        if(prevRef.current.length>0 && role && user){
+          const prevIds=new Set(prevRef.current.map(o=>o.id));
+          const added=newOrds.filter(o=>!prevIds.has(o.id));
+          if(added.length>0){
+            const mine=added.filter(o=>o.decorator===user);
+            const urgent=added.filter(o=>o.urgente&&o.decorator===user);
+            if(urgent.length>0){ playChime("alert"); }
+            else if(mine.length>0){ playChime("new"); }
+          }
+          /* Detectar cuando un pedido mío queda listo (para la secretaria) */
+          if(role==="secretary"){
+            const nowListo=newOrds.filter(o=>o.status==="listo");
+            const wasListo=new Set(prevRef.current.filter(o=>o.status==="listo").map(o=>o.id));
+            if(nowListo.some(o=>!wasListo.has(o.id))) playChime("done");
+          }
+        }
+        prevRef.current=newOrds;
+        setOrders(newOrds); setLoading(false); setConnected(true); setSyncing(true); setTimeout(()=>setSyncing(false),2000);
+      },
+      ()=>{setLoading(false);setConnected(false);}
+    );
+    return unsub;
+  },[role,user]);
+
+  const notify=msg=>{setToast(msg);setTimeout(()=>setToast(null),3200);};
+  const addOrd=async data=>{const now=Date.now();await db.collection("pedidos").add({...data,status:"pendiente",dPhoto:null,ePhoto:null,createdAt:now,updatedAt:now}).then(()=>{setView("list");notify("¡Pedido creado! 🌸");}).catch(()=>notify("❌ Error al guardar."));};
+  const updOrd=async(id,ch)=>{await db.collection("pedidos").doc(id).update({...ch,updatedAt:Date.now()}).then(()=>notify("Estado actualizado ✓")).catch(()=>notify("❌ Error."));};
+
+  if(!pinOk) return <PINScreen onSuccess={()=>setPinOk(true)}/>;
+  if(loading) return(<><div className="loader"><img src={LIZ_LOGO} className="loader-logo" onError={e=>e.target.style.display="none"} alt=""/><div className="loader-title">Floristería Liz</div><div className="spinner"/><div className="loader-sub">Conectando...</div></div></>);
+  if(!role) return(<><RoleSel onSel={(r,n)=>{setRole(r);setUser(n);}}/></>);
+
+  /* ── MODO TV: sin PIN de secretaria, acceso directo ── */
+  if(role==="tv") return(
+    <>
+    <TVView orders={orders} onExit={()=>{setRole(null);setUser(null);}}/>
+    </>
+  );
+
+  /* ── SEGUNDA CAPA: PIN de Secretaria ── */
+  if(role==="secretary" && !secPinOk) return(
+    <>
+    <SecPINScreen
+      onSuccess={()=>setSecPinOk(true)}
+      onBack={()=>{ setRole(null); setUser(null); }}
+    /></>
+  );
+
+  /* MEJORA 3: Modo Kiosko — pantalla especial */
+  if(role==="kiosko") return(
+    <>
+    <KioskoView orders={orders} user={user} onUpdate={updOrd} onExit={()=>{setRole(null);setUser(null);setView("list");setSelOrd(null);}} notify={notify}/>
+    </>
+  );
+
+  const rl={secretary:"Secretaria",decorator:"Florista",driver:"Repartidor"};
+  const selOrder=orders.find(o=>o.id===selOrd?.id);
+  return(
+    <div className="app">
+      
+      {toast&&<div className="toast">{toast}</div>}
+      {syncing&&<div className="sync"><span className="sync-dot"/>Conectado</div>}
+      <header className="hdr">
+        <div className="hdr-r">
+          <div className="hdr-brand">
+            <img src={LIZ_LOGO} alt="" className="hdr-logo" onError={e=>e.target.style.display="none"}/>
+            <div><div className="hdr-name">Floristería Liz</div><div className="hdr-sub">{rl[role]} — {user}</div></div>
+          </div>
+          <div className="hdr-right">
+            <span className={"hdr-dot"+(connected?"":" off")} title={connected?"En línea":"Sin conexión"}/>
+            <button type="button" className="hdr-exit" onClick={()=>{setRole(null);setUser(null);setView("list");setSelOrd(null);setSecPinOk(false);sessionStorage.removeItem("liz-sec-ok");}}>Salir</button>
+          </div>
+        </div>
+      </header>
+      <main className="main">
+        {role==="secretary"&&view==="list"   &&<SecView orders={orders} onSel={o=>{setSelOrd(o);setView("detail");}} onNew={()=>setView("new")}/>}
+        {role==="secretary"&&view==="new"    &&<NewForm onSubmit={addOrd} onCancel={()=>setView("list")}/>}
+        {role==="secretary"&&view==="detail" &&<OrdDet order={selOrder} onBack={()=>setView("list")} onUpdate={updOrd} notify={notify}/>}
+        {role==="decorator"&&view==="list"   &&<DecView orders={orders} user={user} onSel={o=>{setSelOrd(o);setView("detail");}}/>}
+        {role==="decorator"&&view==="detail" &&<OrdDet order={selOrder} onBack={()=>setView("list")} onUpdate={updOrd} notify={notify} isDec/>}
+        {role==="driver"   &&view==="list"   &&<DriView orders={orders} user={user} onSel={o=>{setSelOrd(o);setView("detail");}}/>}
+        {role==="driver"   &&view==="detail" &&<OrdDet order={selOrder} onBack={()=>setView("list")} onUpdate={updOrd} notify={notify} isDri/>}
+      </main>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   MEJORA 3: MODO KIOSKO — Pantalla grande del taller
+   Sin distracción, letras grandes, auto-refresh visual
+══════════════════════════════════════════════════ */
+function KioskoView({ orders, user, onUpdate, onExit, notify }) {
+  const [newAlert,  setNewAlert]  = React.useState(null);
+  const [uploading, setUploading] = React.useState({});
+  const fileRefs = React.useRef({});
+  const prevCount = React.useRef(0);
+
+  const mine = orders
+    .filter(o=>o.decorator===user&&["pendiente","en_produccion","listo"].includes(o.status))
+    .sort((a,b)=>{ if(a.urgente&&!b.urgente) return -1; if(!a.urgente&&b.urgente) return 1; return STATUS_ORDER.indexOf(a.status)-STATUS_ORDER.indexOf(b.status); });
+
+  /* Detectar pedido nuevo en kiosko — alerta visual + sonido */
+  React.useEffect(()=>{
+    if(prevCount.current>0 && mine.length>prevCount.current){
+      const newest=mine[0];
+      setNewAlert(newest.productName||"Nuevo pedido");
+      setTimeout(()=>setNewAlert(null),4000);
+      playChime(mine.find(o=>o.urgente)?"alert":"new");
+    }
+    prevCount.current=mine.length;
+  },[mine.length]);
+
+  const handlePhoto=(orderId,e)=>{
+    const file=e.target.files[0]; if(!file) return;
+    setUploading(u=>({...u,[orderId]:true}));
+    const r=new FileReader(); r.onloadend=()=>{
+      const img=new Image(); img.src=r.result; img.onload=async()=>{
+        const canvas=document.createElement("canvas"); const MAX=800; let w=img.width,h=img.height;
+        if(w>h){if(w>MAX){h*=MAX/w;w=MAX;}}else{if(h>MAX){w*=MAX/h;h=MAX;}}
+        canvas.width=w; canvas.height=h; canvas.getContext("2d").drawImage(img,0,0,w,h);
+        const b64=canvas.toDataURL("image/jpeg",.65);
+        try{const url=await uploadPhoto(b64,orderId,"taller"); await onUpdate(orderId,{dPhoto:url,status:"listo",finishedAt:Date.now()});}
+        catch{onUpdate(orderId,{dPhoto:b64,status:"listo",finishedAt:Date.now()});}
+        finally{setUploading(u=>{const n={...u};delete n[orderId];return n;});}
+      };
+    }; r.readAsDataURL(file);
+  };
+
+  return(
+    <div className="kiosko-wrap">
+      {newAlert&&<div className="kiosko-new-alert">🌸 NUEVO PEDIDO — {newAlert}</div>}
+      <div className="kiosko-hdr">
+        <div className="kiosko-hdr-brand">
+          <img src={LIZ_LOGO} className="kiosko-logo" onError={e=>e.target.style.display="none"} alt=""/>
+          <div><div className="kiosko-hdr-name">Taller — {user}</div><div className="kiosko-hdr-sub">Floristería Liz · Modo Kiosko</div></div>
+        </div>
+        <span className="kiosko-hdr-dot"/>
+      </div>
+
+      <div className="kiosko-body">
+        <div className="kiosko-counter">
+          <div className="kiosko-counter-n">{mine.length}</div>
+          <div className="kiosko-counter-l">{mine.length===1?"pedido pendiente":"pedidos pendientes"} · {mine.filter(o=>o.urgente).length} urgentes ⚡</div>
+        </div>
+
+        {mine.length===0?(
+          <div className="kiosko-empty">
+            <span className="kiosko-empty-ic">✅</span>
+            <div className="kiosko-empty-txt">¡Todo al día!<br/>No hay pedidos pendientes.<br/><br/>Esta pantalla se actualiza automáticamente.</div>
+          </div>
+        ):mine.map(o=>{
+          const cfg=SC[o.status]||SC.pendiente; const isUpl=!!uploading[o.id];
+          if(!fileRefs.current[o.id]) fileRefs.current[o.id]=React.createRef();
+          return(
+            <div key={o.id} className={"kiosko-card"+(o.urgente?" urgente":"")}>
+              <div className="kiosko-status-bar" style={{background:cfg.dot}}/>
+              {o.urgente&&<div style={{marginBottom:8}}><span style={{background:"#dc2626",color:"#fff",fontSize:12,fontWeight:800,padding:"4px 12px",borderRadius:12}}>⚡ URGENTE</span></div>}
+              <div style={{marginBottom:6}}><span className="sbadge" style={{color:cfg.color,background:cfg.bg}}><span className="sdot" style={{background:cfg.dot}}></span>{cfg.label}</span></div>
+              <div className="kiosko-prod-name">{o.productName}</div>
+              <div className="kiosko-client">👤 {o.clientName}</div>
+              <div className="kiosko-detail">
+                ⏰ Entrega: <strong>{o.deliveryTime||"Flexible"}</strong>
+                {o.price&&<span> · 💰 {COP(o.price)}</span>}
+                {o.pago&&<span> · {PAGO_IC[o.pago]} {o.pago}</span>}
+              </div>
+              {o.notes&&<div className="kiosko-note">📝 "{o.notes}"</div>}
+              {o.productUrl&&<a href={o.productUrl} target="_blank" rel="noreferrer" style={{display:"inline-flex",alignItems:"center",gap:6,color:"var(--mid)",fontSize:13,fontWeight:600,textDecoration:"none",marginBottom:10}}>🔗 Ver diseño de referencia</a>}
+
+              {o.status==="pendiente"&&(
+                <button type="button" className="kiosko-btn init" onClick={()=>onUpdate(o.id,{status:"en_produccion"})}>
+                  🛠️ Iniciar Fabricación
+                </button>
+              )}
+              {o.status==="en_produccion"&&(<>
+                <input type="file" accept="image/*" capture="environment" style={{position:"fixed",left:-9999,opacity:0}} ref={fileRefs.current[o.id]} onChange={e=>handlePhoto(o.id,e)}/>
+                {isUpl?(
+                  <div className="kiosko-upload"><div className="spinner" style={{width:20,height:20,borderWidth:2}}/>Subiendo foto...</div>
+                ):(
+                  <button type="button" className="kiosko-btn photo" onClick={()=>fileRefs.current[o.id]?.current?.click()}>
+                    📸 Terminar y Fotografiar Arreglo
+                  </button>
+                )}
+                {o.dPhoto&&<img src={o.dPhoto} className="kiosko-photo-prev"/>}
+              </>)}
+              {o.status==="listo"&&(<>
+                <div className="kiosko-done-badge">✅ Listo — el domiciliario lo recogerá pronto</div>
+                {o.dPhoto&&<img src={o.dPhoto} className="kiosko-photo-prev"/>}
+              </>)}
+            </div>
+          );
+        })}
+
+        <button type="button" className="kiosko-exit" onClick={onExit}>
+          Salir del modo kiosko
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   MEJORA 2: HISTORIAL DEL CLIENTE
+══════════════════════════════════════════════════ */
+function ClientHistory({ phone, currentId }) {
+  const [history, setHistory] = React.useState(null);
+  React.useEffect(()=>{
+    if(!phone) return;
+    db.collection("pedidos").where("clientPhone","==",phone).get()
+      .then(snap=>{
+        const h=snap.docs.map(d=>({id:d.id,...d.data()})).filter(o=>o.id!==currentId).sort((a,b)=>b.createdAt-a.createdAt);
+        setHistory(h);
+      }).catch(()=>setHistory([]));
+  },[phone,currentId]);
+  if(!phone||history===null) return null;
+  const isVip=history.length>=3;
+  return(
+    <div className="history-card">
+      <div className="history-title">
+        👤 Historial del cliente
+        {isVip&&<span className="history-vip">⭐ Cliente VIP</span>}
+      </div>
+      {history.length===0?(
+        <div className="history-empty">Primera compra de este cliente 🌸</div>
+      ):(
+        <>
+          <div style={{fontSize:12,color:"var(--text3)",marginBottom:10}}>
+            {history.length} compra{history.length!==1?"s":"s"} anteriores · Total: {COP(history.reduce((a,o)=>a+(o.price||0),0))}
+          </div>
+          {history.slice(0,4).map(o=>{
+            const d=new Date(o.createdAt); const ago=Math.round((Date.now()-o.createdAt)/(1000*60*60*24));
+            const agoStr=ago===0?"Hoy":ago===1?"Ayer":ago<7?`Hace ${ago} días`:ago<30?`Hace ${Math.round(ago/7)} sem`:ago<365?`Hace ${Math.round(ago/30)} mes.`:`Hace ${Math.round(ago/365)} año`;
+            return(
+              <div key={o.id} className="history-row">
+                <div><div className="history-prod">{o.productName||"—"}</div><div className="history-date">{agoStr}</div></div>
+                <div className="history-price">{COP(o.price||0)}</div>
+              </div>
+            );
+          })}
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   VISTA SECRETARIA
+══════════════════════════════════════════════════ */
+function SecView({ orders, onSel, onNew }) {
+  const [dayF,setDayF]=React.useState("hoy"); const [tab,setTab]=React.useState("pedidos"); const [search,setSearch]=React.useState("");
+  const filtered=orders.filter(o=>dayF==="hoy"?isToday(o.createdAt):dayF==="ayer"?isYesterday(o.createdAt):true);
+  const searched=React.useMemo(()=>{
+    let r=filtered; if(search.trim()){const s=search.toLowerCase();r=r.filter(o=>o.clientName?.toLowerCase().includes(s)||o.clientAddress?.toLowerCase().includes(s)||o.productName?.toLowerCase().includes(s)||o.orderNum?.toLowerCase().includes(s));}
+    return [...r].sort((a,b)=>{if(a.urgente&&!b.urgente)return -1;if(!a.urgente&&b.urgente)return 1;return STATUS_ORDER.indexOf(a.status)-STATUS_ORDER.indexOf(b.status);});
+  },[filtered,search]);
+  const cnt=st=>filtered.filter(o=>o.status===st).length;
+  const totF=filtered.filter(o=>o.status==="entregado").reduce((a,o)=>a+(o.price||0),0);
+  const totP=filtered.reduce((a,o)=>a+(o.price||0),0);
+  const handleExport=()=>{
+    let csv="\uFEFF#Pedido,Estado,Destinatario,Celular,Dirección,Arreglo,Precio,Pago,Florista,Repartidor,Hora,Tiempo Elaboración,Fecha\n";
+    filtered.forEach(o=>{const cl=t=>t?String(t).replace(/,/g," ").replace(/\n/g," "):""; const tp=o.finishedAt?formatTime(o.finishedAt-o.createdAt):"—"; csv+=[cl(o.orderNum||o.id),cl(o.status),cl(o.clientName),cl(o.clientPhone),cl(o.clientAddress),cl(o.productName),o.price||0,cl(o.pago||"—"),cl(o.decorator),cl(o.deliveryPerson||"—"),cl(o.deliveryTime||"Flexible"),tp,new Date(o.createdAt).toLocaleString("es-CO")].join(",")+"\n";});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"})); a.download="Liz_"+dayF+"_"+new Date().toLocaleDateString("es-CO")+".csv"; a.click();
+  };
+  return(
+    <div className="fade">
+      <div className="banner"><div><div className="ban-l">Panel del día</div><div className="ban-n">{filtered.length}</div><div className="ban-s">Facturado: {COP(totF)} / {COP(totP)}</div></div><button type="button" className="ban-btn" onClick={onNew}>+ Nuevo</button></div>
+      <div className="tabs"><button type="button" className={"tab-btn"+(tab==="pedidos"?" on":"")} onClick={()=>setTab("pedidos")}>📋 Pedidos</button><button type="button" className={"tab-btn"+(tab==="stats"?" on":"")} onClick={()=>setTab("stats")}>📊 Estadísticas</button></div>
+      {tab==="stats"?<StatsView orders={filtered}/>:(
+        <>
+          <div className="day-row">
+            <div className="chips">{[["hoy","🌸 Hoy"],["ayer","⏳ Ayer"],["todos","📋 Todos"]].map(([k,l])=><button key={k} type="button" className={"chip"+(dayF===k?" on":"")} onClick={()=>setDayF(k)}>{l}</button>)}</div>
+            <button type="button" className="btn-export" onClick={handleExport}>📥 Excel</button>
+          </div>
+          <div className="stats">
+            {[["pendiente","#d97706","Pend."],["en_produccion","var(--mid)","Taller"],["listo","#16a34a","Listos"],["en_camino","#2563eb","En Ruta"]].map(([k,c,l])=>(
+              <div key={k} className="stat"><div className="stat-n" style={{color:c}}>{cnt(k)}</div><div className="stat-l">{l}</div></div>
+            ))}
+          </div>
+          <div className="search-wrap">
+            <span className="search-ic">🔍</span>
+            <input type="text" className="search-in" placeholder="Buscar por nombre, dirección o arreglo..." value={search} onChange={e=>setSearch(e.target.value)}/>
+            {search&&<button type="button" className="search-clear" onClick={()=>setSearch("")}>✕</button>}
+          </div>
+          {search&&<div style={{fontSize:12,color:"var(--text3)",marginBottom:12}}>{searched.length} resultado(s) para "{search}"</div>}
+          {searched.length===0?<EmptyState text={search?"Sin resultados para ese criterio.":"Sin pedidos en este período."}/>:searched.map(o=><OrdCard key={o.id} o={o} onClick={()=>onSel(o)}/>)}
+        </>
+      )}
+    </div>
+  );
+}
+
+function StatsView({orders}){
+  const ent=orders.filter(o=>o.status==="entregado"); const totF=ent.reduce((a,o)=>a+(o.price||0),0);
+  const fStats=DECORATORS.filter(d=>d!=="INVITADO").map(d=>{const m=orders.filter(o=>o.decorator===d); const done=m.filter(o=>["listo","en_camino","entregado"].includes(o.status)); const times=done.filter(o=>o.finishedAt).map(o=>o.finishedAt-o.createdAt); const avg=times.length?Math.round(times.reduce((a,b)=>a+b,0)/times.length):null; return{name:d,total:m.length,done:done.length,avg};}).filter(d=>d.total>0).sort((a,b)=>b.total-a.total);
+  const maxO=Math.max(...fStats.map(d=>d.total),1); const medals=["🥇","🥈","🥉"];
+  const sStats=Object.entries(SC).map(([k,v])=>({key:k,label:v.label,count:orders.filter(o=>o.status===k).length,dot:v.dot})).filter(s=>s.count>0);
+  const pStats=PAGOS.map(p=>({name:p,count:orders.filter(o=>o.pago===p).length})).filter(p=>p.count>0);
+  return(
+    <div className="fade">
+      <div className="stats-rev-grid">
+        <div className="stats-card accent"><div style={{fontSize:10,opacity:.85,textTransform:"uppercase",letterSpacing:1.2,fontWeight:600,marginBottom:8,color:"rgba(255,255,255,.85)"}}>Facturado</div><div style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:"#fff"}}>{COP(totF)}</div><div style={{fontSize:11,color:"rgba(255,255,255,.7)",marginTop:5}}>{ent.length} entregados</div></div>
+        <div className="stats-card"><div style={{fontSize:10,color:"var(--text3)",textTransform:"uppercase",letterSpacing:1.2,fontWeight:600,marginBottom:8}}>Total</div><div style={{fontFamily:"'Playfair Display',serif",fontSize:22,fontWeight:700,color:"var(--deep)"}}>{orders.length}</div><div style={{fontSize:11,color:"var(--text3)",marginTop:5}}>{orders.filter(o=>o.urgente).length} urgentes ⚡</div></div>
+      </div>
+      <div className="dt-card" style={{marginBottom:16}}>
+        <div style={{fontSize:13,fontWeight:700,color:"var(--text)",marginBottom:14}}>Estado de pedidos</div>
+        {sStats.map(s=><div key={s.key} style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}><span style={{width:8,height:8,borderRadius:"50%",background:s.dot,flexShrink:0}}></span><div style={{flex:1,fontSize:13}}>{s.label}</div><span style={{fontSize:13,fontWeight:700,color:"var(--deep)",minWidth:20,textAlign:"right"}}>{s.count}</span><div className="prog-bar" style={{width:80}}><div className="prog-fill" style={{width:Math.round(s.count/orders.length*100)+"%",background:s.dot}}></div></div></div>)}
+      </div>
+      {fStats.length>0&&<div className="dt-card" style={{marginBottom:16}}>
+        <div style={{fontSize:13,fontWeight:700,color:"var(--text)",marginBottom:14}}>🏆 Rendimiento floristas</div>
+        {fStats.map((f,i)=><div key={f.name} className="florista-row"><span style={{fontSize:16,minWidth:24}}>{medals[i]||"  "}</span><div style={{flex:1}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}><span style={{fontSize:14,fontWeight:700}}>{f.name}</span><div style={{display:"flex",gap:10,alignItems:"center"}}>{f.avg&&<span style={{fontSize:11,color:"var(--text3)"}}>⏱ {formatTime(f.avg)}</span>}<span style={{fontSize:15,fontWeight:800,color:"var(--mid)"}}>{f.total}</span></div></div><div className="prog-bar"><div className="prog-fill" style={{width:Math.round(f.total/maxO*100)+"%"}}></div></div></div></div>)}
+      </div>}
+      {pStats.length>0&&<div className="dt-card"><div style={{fontSize:13,fontWeight:700,color:"var(--text)",marginBottom:14}}>💳 Métodos de pago</div>{pStats.map(p=><div key={p.name} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"9px 0",borderBottom:"1px solid var(--bd)"}}><span style={{fontSize:13}}>{PAGO_IC[p.name]} {p.name}</span><div style={{display:"flex",gap:10,alignItems:"center"}}><span style={{fontSize:13,fontWeight:700,color:"var(--deep)"}}>{p.count}</span><div className="prog-bar" style={{width:70}}><div className="prog-fill" style={{width:Math.round(p.count/orders.length*100)+"%"}}></div></div></div></div>)}</div>}
+      {orders.length===0&&<EmptyState text="Sin datos para este período."/>}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   TARJETA DE PEDIDO
+══════════════════════════════════════════════════ */
+function OrdCard({o,onClick}){
+  const cfg=SC[o.status]||SC.pendiente; const elapsed=!o.finishedAt?formatTime(Date.now()-o.createdAt):null;
+  return(
+    <div className={"card"+(o.urgente?" urgente":"")} onClick={onClick}>
+      <div className="card-top">
+        <div><div style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:4}}><span className="card-client">{o.clientName}</span>{o.urgente&&<span className="urgente-badge">⚡ URGENTE</span>}</div><div className="card-time">⏰ {o.deliveryTime||"Flexible"} {o.pago&&<span style={{marginLeft:6}}>{PAGO_IC[o.pago]} {o.pago}</span>}</div></div>
+        <span className="sbadge" style={{color:cfg.color,background:cfg.bg}}><span className="sdot" style={{background:cfg.dot}}></span>{cfg.label}</span>
+      </div>
+      <div className="card-prod"><div className="card-prod-icon">💐</div><div style={{flex:1,minWidth:0}}><div className="card-pname">{o.productName}</div><div className="card-price">{COP(o.price||0)}</div>{o.productUrl&&<a href={o.productUrl} target="_blank" rel="noreferrer" className="card-link-badge" onClick={e=>e.stopPropagation()}>🔗 Ver en tienda</a>}</div></div>
+      <div className="card-meta">📍 {o.clientAddress}<br/>🎨 {o.decorator} | 🛵 {o.deliveryPerson||"Sin asignar"}{elapsed&&o.status!=="entregado"&&<span className="time-badge" style={{background:"#fef3c7",color:"#92400e"}}> ⏱ {elapsed}</span>}{o.finishedAt&&<span className="time-badge" style={{background:"#dcfce7",color:"#15803d"}}> ✓ {formatTime(o.finishedAt-o.createdAt)}</span>}</div>
+      {o.orderNum&&<div className="card-num">#{o.orderNum}</div>}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   FORMULARIO NUEVO PEDIDO
+══════════════════════════════════════════════════ */
+function NewForm({onSubmit,onCancel}){
+  const [pName,setPName]=React.useState(""); const [pUrl,setPUrl]=React.useState(""); const [price,setPrice]=React.useState("");
+  const [name,setName]=React.useState(""); const [phone,setPhone]=React.useState(""); const [addr,setAddr]=React.useState("");
+  const [dec,setDec]=React.useState(DECORATORS[0]); const [notes,setNotes]=React.useState(""); const [time,setTime]=React.useState("");
+  const [pago,setPago]=React.useState(""); const [urgente,setUrgente]=React.useState(false);
+  const orderNum=React.useMemo(genOrderNum,[]);
+  const save=e=>{e.preventDefault();if(!pName||!pUrl||!price){alert("Completa el arreglo, precio y enlace.");return;}if(!name||!addr){alert("Nombre y dirección son obligatorios.");return;}onSubmit({clientName:name,clientPhone:phone,clientAddress:addr,productName:pName,productUrl:pUrl,price:Number(price),decorator:dec,deliveryPerson:null,notes,deliveryTime:time,pago,urgente,orderNum});};
+  return(
+    <form onSubmit={save} className="fade">
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
+        <div><h2 style={{fontSize:20,fontWeight:800,color:"var(--deep)"}}>Nuevo Pedido</h2><div style={{fontSize:11,color:"var(--text3)",marginTop:4}}>N° <span className="num-pedido">{orderNum}</span></div></div>
+        <button type="button" className="dt-back" onClick={onCancel} style={{padding:0}}>Cancelar ✕</button>
+      </div>
+      <div className="form-card">
+        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:14}}><span className="step-num">1</span><span style={{fontSize:13,fontWeight:700,color:"var(--deep)",textTransform:"uppercase",letterSpacing:".5px"}}>Arreglo Floral</span></div>
+        <label className="f-l" style={{marginTop:0}}>Nombre del diseño</label>
+        <input type="text" placeholder="Ej: Caja Lujo 24 Rosas Rojas" className="f-i" value={pName} onChange={e=>setPName(e.target.value)} required/>
+        <label className="f-l">Enlace de la tienda</label>
+        <input type="url" placeholder="floristerializ.com/store/..." className="f-i" value={pUrl} onChange={e=>setPUrl(e.target.value)} required/>
+        <label className="f-l">Precio cobrado</label>
+        <input type="number" placeholder="Ej: 180000" className="f-i" style={{fontWeight:700,color:"var(--mid)"}} value={price} onChange={e=>setPrice(e.target.value)} required/>
+        <label className="f-l">Método de pago</label>
+        <div className="pago-grid">{PAGOS.map(p=><button key={p} type="button" className={"pago-btn"+(pago===p?" sel":"")} onClick={()=>setPago(p===pago?"":p)}>{PAGO_IC[p]} {p}</button>)}</div>
+        <div className="urgente-row"><div><div style={{fontSize:14,fontWeight:700,color:"#dc2626"}}>⚡ Pedido Urgente</div><div style={{fontSize:12,color:"var(--text3)",marginTop:2}}>Sube al tope · Sonido de alerta</div></div><label className="toggle"><input type="checkbox" checked={urgente} onChange={e=>setUrgente(e.target.checked)}/><span className="toggle-slider"></span></label></div>
+      </div>
+      <div className="form-card">
+        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:14}}><span className="step-num">2</span><span style={{fontSize:13,fontWeight:700,color:"var(--deep)",textTransform:"uppercase",letterSpacing:".5px"}}>Destinatario</span></div>
+        <label className="f-l" style={{marginTop:0}}>Nombre completo</label>
+        <input type="text" placeholder="Quien recibe el arreglo" className="f-i" value={name} onChange={e=>setName(e.target.value)} required/>
+        <label className="f-l">Celular</label>
+        <input type="tel" placeholder="310 000 0000" className="f-i" value={phone} onChange={e=>setPhone(e.target.value)}/>
+        <label className="f-l">Dirección exacta</label>
+        <input type="text" placeholder="Calle, Barrio, Ciudad" className="f-i" value={addr} onChange={e=>setAddr(e.target.value)} required/>
+        <div className="f-grid"><div><label className="f-l">Florista asignado</label><select className="f-s" value={dec} onChange={e=>setDec(e.target.value)}>{DECORATORS.map(d=><option key={d} value={d}>{d}</option>)}</select></div><div><label className="f-l">Hora de entrega</label><input type="text" placeholder="Ej: 3:00 PM" className="f-i" style={{marginTop:5}} value={time} onChange={e=>setTime(e.target.value)}/></div></div>
+      </div>
+      <div className="form-card">
+        <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:14}}><span className="step-num">3</span><span style={{fontSize:13,fontWeight:700,color:"var(--deep)",textTransform:"uppercase",letterSpacing:".5px"}}>Dedicatoria</span></div>
+        <textarea placeholder="Texto exacto para la tarjeta..." className="f-i" style={{height:76,resize:"none",marginTop:0}} value={notes} onChange={e=>setNotes(e.target.value)}/>
+      </div>
+      <button type="submit" className="btn-p">🌸 Crear Pedido</button>
+      <button type="button" className="btn-gh" onClick={onCancel}>Cancelar</button>
+      <div style={{height:20}}/>
+    </form>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   DETALLE DE PEDIDO — con Historial del cliente
+══════════════════════════════════════════════════ */
+function OrdDet({order,onBack,onUpdate,notify,isDec,isDri}){
+  const fileRef=React.useRef(); const [uploading,setUploading]=React.useState(false);
+  if(!order) return <div style={{padding:20,color:"var(--text3)"}}>Cargando...</div>;
+  const cfg=SC[order.status]||SC.pendiente; const timeProd=order.finishedAt?formatTime(order.finishedAt-order.createdAt):null;
+  const handlePhoto=async e=>{
+    const file=e.target.files[0]; if(!file) return; setUploading(true);
+    const r=new FileReader(); r.onloadend=()=>{
+      const img=new Image(); img.src=r.result; img.onload=async()=>{
+        const canvas=document.createElement("canvas"); const MAX=800; let w=img.width,h=img.height;
+        if(w>h){if(w>MAX){h*=MAX/w;w=MAX;}}else{if(h>MAX){w*=MAX/h;h=MAX;}}
+        canvas.width=w; canvas.height=h; canvas.getContext("2d").drawImage(img,0,0,w,h);
+        const b64=canvas.toDataURL("image/jpeg",.65);
+        try{const url=await uploadPhoto(b64,order.id,isDec?"taller":"entrega"); if(isDec) await onUpdate(order.id,{dPhoto:url,status:"listo",finishedAt:Date.now()}); if(isDri) await onUpdate(order.id,{ePhoto:url,status:"entregado"});}
+        catch{if(isDec) onUpdate(order.id,{dPhoto:b64,status:"listo",finishedAt:Date.now()}); if(isDri) onUpdate(order.id,{ePhoto:b64,status:"entregado"});}
+        finally{setUploading(false);}
+      };
+    }; r.readAsDataURL(file);
+  };
+  return(
+    <div className="fade">
+      <button type="button" className="dt-back" onClick={onBack}>← Volver al listado</button>
+      <div className="dt-hero">
+        {order.urgente&&<div style={{marginBottom:10}}><span className="urgente-badge">⚡ PEDIDO URGENTE</span></div>}
+        <div className="dt-hero-icon">💐</div>
+        {order.orderNum&&<div style={{fontSize:11,color:"var(--text3)",fontFamily:"monospace",marginTop:8}}>#{order.orderNum}</div>}
+        <div style={{fontSize:17,fontWeight:800,color:"var(--text)",marginTop:10,lineHeight:1.3}}>{order.productName}</div>
+        <div style={{fontSize:20,color:"var(--mid)",fontWeight:800,marginTop:5}}>{COP(order.price||0)}</div>
+        {order.pago&&<div style={{fontSize:12,color:"var(--text2)",marginTop:4}}>{PAGO_IC[order.pago]} {order.pago}</div>}
+        <div style={{marginTop:10}}><span className="sbadge" style={{color:cfg.color,background:cfg.bg}}><span className="sdot" style={{background:cfg.dot}}></span>{cfg.label}</span></div>
+        {timeProd&&<div style={{fontSize:12,color:"#15803d",fontWeight:700,marginTop:8}}>✓ Elaborado en {timeProd}</div>}
+        {order.productUrl&&<a href={order.productUrl} target="_blank" rel="noreferrer" className="btn-web" style={{marginTop:14}}>🌐 Ver diseño en floristerializ.com</a>}
+      </div>
+
+      {/* MEJORA 2: Historial del cliente — solo para secretaria */}
+      {!isDec&&!isDri&&<ClientHistory phone={order.clientPhone} currentId={order.id}/>}
+
+      {!isDec&&!isDri&&(order.dPhoto||order.ePhoto)&&(
+        <div className="ev-section">
+          <div style={{fontSize:13,fontWeight:700,color:"#065f46",marginBottom:6}}>📸 Evidencias</div>
+          <div className="ev-grid">
+            {order.dPhoto&&<div className="ev-card"><div style={{fontSize:10,color:"#16a34a",fontWeight:700,textTransform:"uppercase",marginBottom:8}}>Taller</div><img src={order.dPhoto} style={{width:"100%",borderRadius:10,maxHeight:120,objectFit:"cover"}}/><a href={order.dPhoto} download={"Taller_"+order.clientName+".jpg"} className="ev-btn-dl" style={{background:"#16a34a"}}>💾 Guardar</a></div>}
+            {order.ePhoto&&<div className="ev-card"><div style={{fontSize:10,color:"#1d4ed8",fontWeight:700,textTransform:"uppercase",marginBottom:8}}>Entrega</div><img src={order.ePhoto} style={{width:"100%",borderRadius:10,maxHeight:120,objectFit:"cover"}}/><a href={order.ePhoto} download={"Ruta_"+order.clientName+".jpg"} className="ev-btn-dl" style={{background:"#1d4ed8"}}>💾 Guardar</a></div>}
+          </div>
+        </div>
+      )}
+      <div className="dt-card">
+        <div className="dt-row"><div className="dt-ic">⏱️</div><div><div className="dt-k">Productividad</div><div className="dt-v">{order.finishedAt?<span style={{color:"#15803d",fontWeight:700}}>✓ Finalizado en {timeProd}</span>:<span style={{color:"#92400e",fontWeight:700}}>⏳ {formatTime(Date.now()-order.createdAt)} transcurridos</span>}</div></div></div>
+        <div className="dt-row"><div className="dt-ic">👤</div><div><div className="dt-k">Destinatario</div><div className="dt-v">{order.clientName}</div></div></div>
+        <div className="dt-row"><div className="dt-ic">📞</div><div><div className="dt-k">Celular</div><div className="dt-v">{order.clientPhone||"No registrado"}</div>{order.clientPhone&&<div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:6}}><a href={tel(order.clientPhone)} className="btn-call">📞 Llamar</a><a href={wa(order.clientPhone)} target="_blank" rel="noreferrer" className="btn-wam">💬 WhatsApp</a></div>}</div></div>
+        <div className="dt-row"><div className="dt-ic">📍</div><div><div className="dt-k">Dirección</div><div className="dt-v">{order.clientAddress}</div><a href={gmap(order.clientAddress)} target="_blank" rel="noreferrer" className="btn-maps">🗺️ Google Maps</a></div></div>
+        <div className="dt-row"><div className="dt-ic">⏰</div><div><div className="dt-k">Hora prometida</div><div className="dt-v" style={{fontWeight:700}}>{order.deliveryTime||"Flexible"}</div></div></div>
+        {order.notes&&<div className="dt-row"><div className="dt-ic">📝</div><div><div className="dt-k">Dedicatoria</div><div className="dt-v" style={{background:"#fff5f5",color:"#b91c1c",fontWeight:600,padding:"8px 12px",borderRadius:10,border:"1px solid #fed7d7",marginTop:4}}>{order.notes}</div></div></div>}
+        <div className="dt-row"><div className="dt-ic">🎨</div><div><div className="dt-k">Personal</div><div className="dt-v">Florista: <strong>{order.decorator}</strong> · Repartidor: <strong>{order.deliveryPerson||"Por asignar"}</strong></div></div></div>
+      </div>
+      {!isDec&&!isDri&&order.clientPhone&&<button type="button" className="btn-wa-share" onClick={()=>shareWA(order)}>💬 Compartir estado por WhatsApp</button>}
+      {!isDec&&!isDri&&(<div className="dt-card" style={{marginTop:4}}>
+        <div style={{fontSize:14,fontWeight:700,marginBottom:12}}>Acciones</div>
+        {order.status==="pendiente"&&<button type="button" className="btn-p" onClick={()=>onUpdate(order.id,{status:"en_produccion"})}>🛠️ Enviar a taller</button>}
+        {order.status==="listo"&&(<><div style={{fontSize:12,color:"var(--text2)",marginBottom:8}}>Asignar repartidor:</div><div className="dg">{DRIVERS.map(dr=><button key={dr} type="button" className="db" onClick={()=>onUpdate(order.id,{deliveryPerson:dr,status:"en_camino"})}>🛵 {dr}</button>)}</div></>)}
+        {order.status==="en_camino"&&<button type="button" className="btn-g" onClick={()=>onUpdate(order.id,{status:"entregado"})}>✓ Marcar entregado</button>}
+        <button type="button" className="btn-gh" onClick={onBack}>← Regresar</button>
+      </div>)}
+      {isDec&&(<div className="dt-card" style={{borderColor:"rgba(197,143,235,.5)"}}>
+        <div style={{fontSize:14,fontWeight:700,color:"var(--deep)",marginBottom:12}}>Taller</div>
+        {order.status==="pendiente"&&<button type="button" className="btn-p" onClick={()=>onUpdate(order.id,{status:"en_produccion"})}>🛠️ Iniciar fabricación</button>}
+        {order.status==="en_produccion"&&(<><div style={{fontSize:13,color:"var(--deep)",fontWeight:600,marginBottom:4}}>Fotografía el arreglo terminado para marcarlo como Listo.</div><input type="file" accept="image/*" capture="environment" className="ph-in" ref={fileRef} onChange={handlePhoto}/>{uploading?<div className="ph-upload"><div className="spinner" style={{width:18,height:18,borderWidth:2}}/>Subiendo foto...</div>:<button type="button" className="ph-btn" onClick={()=>fileRef.current.click()}>📸 Fotografiar arreglo terminado</button>}</>)}
+        {order.dPhoto&&<div><div className="dt-k" style={{marginTop:12}}>Foto:</div><img src={order.dPhoto} className="ph-img"/></div>}
+        {order.status==="listo"&&<div style={{background:"#dcfce7",borderRadius:16,padding:14,textAlign:"center",fontSize:14,fontWeight:700,color:"#15803d",marginTop:4}}>✅ Listo — esperando al repartidor</div>}
+      </div>)}
+      {isDri&&(<div className="dt-card" style={{borderColor:"rgba(59,130,246,.4)"}}>
+        <div style={{fontSize:14,fontWeight:700,color:"#1e40af",marginBottom:8}}>Mi ruta</div>
+        <a href={gmap(order.clientAddress)} target="_blank" rel="noreferrer" className="btn-maps" style={{display:"inline-flex",marginBottom:10}}>🗺️ Abrir Maps</a>
+        {order.clientPhone&&<div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}><a href={tel(order.clientPhone)} className="btn-call">📞 Llamar</a><a href={wa(order.clientPhone)} target="_blank" rel="noreferrer" className="btn-wam">💬 WA</a></div>}
+        {order.status==="listo"&&<button type="button" className="btn-b" onClick={()=>onUpdate(order.id,{deliveryPerson:order.deliveryPerson,status:"en_camino"})}>🚀 Iniciar ruta</button>}
+        {order.status==="en_camino"&&(<><input type="file" accept="image/*" capture="environment" className="ph-in" ref={fileRef} onChange={handlePhoto}/>{uploading?<div className="ph-upload"><div className="spinner" style={{width:18,height:18,borderWidth:2}}/>Subiendo...</div>:<button type="button" className="ph-btn" style={{borderColor:"#3b82f6",color:"#1e40af"}} onClick={()=>fileRef.current.click()}>📸 Fotografiar entrega en destino</button>}</>)}
+        {order.ePhoto&&<div><div className="dt-k" style={{marginTop:12}}>Foto entrega:</div><img src={order.ePhoto} className="ph-img"/></div>}
+      </div>)}
+      <div style={{height:20}}/>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   VISTAS DECORADOR Y REPARTIDOR
+══════════════════════════════════════════════════ */
+function DecView({orders,user,onSel}){
+  const mine=orders.filter(o=>o.decorator===user&&["pendiente","en_produccion","listo"].includes(o.status)).sort((a,b)=>(b.urgente?1:0)-(a.urgente?1:0));
+  return(<div className="fade">
+    <div className="banner"><div><div className="ban-l">Mi mesa de trabajo</div><div className="ban-n">{mine.length}</div><div className="ban-s">{mine.filter(o=>o.urgente).length} urgentes ⚡</div></div></div>
+    {mine.length===0?<EmptyState text="Estás al día ✓"/>:mine.map(o=>(
+      <div key={o.id} className={"tc"+(o.urgente?" urgente":"")}>
+        <div className="tc-top"><div className="tc-icon">💐</div><div style={{flex:1}}><div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}><span style={{fontSize:15,fontWeight:800}}>{o.productName}</span>{o.urgente&&<span className="urgente-badge">⚡</span>}</div><div style={{fontSize:15,color:"var(--mid)",fontWeight:800,marginTop:3}}>{COP(o.price||0)}</div><div style={{marginTop:6}}><span className="sbadge" style={{color:SC[o.status]?.color,background:SC[o.status]?.bg}}><span className="sdot" style={{background:SC[o.status]?.dot}}></span>{SC[o.status]?.label}</span></div></div></div>
+        <div className="tc-info"><div className="tc-info-title">Detalles</div><div className="tc-row">👤 {o.clientName}</div><div className="tc-row">🕐 {o.deliveryTime||"Flexible"}</div>{o.notes&&<div className="tc-note">📝 <em>{o.notes}</em></div>}</div>
+        <button type="button" className="btn-p" onClick={()=>onSel(o)}>{o.status==="pendiente"?"🛠️ Iniciar":o.status==="en_produccion"?"📸 Fotografiar y marcar listo":"✅ Ver"}</button>
+      </div>
+    ))}
+  </div>);
+}
+
+function DriView({orders,user,onSel}){
+  const mine=orders.filter(o=>o.deliveryPerson===user&&["listo","en_camino"].includes(o.status));
+  const avail=orders.filter(o=>o.status==="listo"&&!o.deliveryPerson);
+  return(<div className="fade">
+    <div className="banner" style={{background:"linear-gradient(135deg,#1d4ed8,#3b82f6)"}}><div><div className="ban-l">Mis despachos</div><div className="ban-n">{mine.length}</div><div className="ban-s">{avail.length} disponibles</div></div></div>
+    {mine.length===0?<EmptyState text="Sin entregas activas."/>:mine.map(o=>(
+      <div key={o.id} className="tc">
+        <div className="tc-top"><div className="tc-icon">💐</div><div style={{flex:1}}><div style={{fontSize:15,fontWeight:800}}>{o.productName}</div><div style={{fontSize:13,color:"var(--text2)",marginTop:2}}>📍 {o.clientAddress}</div></div></div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:10}}><a href={gmap(o.clientAddress)} target="_blank" rel="noreferrer" className="btn-maps" style={{marginTop:0}}>🗺️ Maps</a>{o.clientPhone&&<a href={tel(o.clientPhone)} className="btn-call" style={{marginTop:0}}>📞</a>}{o.clientPhone&&<a href={wa(o.clientPhone)} target="_blank" rel="noreferrer" className="btn-wam" style={{marginTop:0,marginLeft:0}}>💬</a>}</div>
+        <button type="button" className="btn-b" onClick={()=>onSel(o)}>{o.status==="listo"?"🚀 Iniciar ruta":"📸 Confirmar entrega"}</button>
+      </div>
+    ))}
+    {avail.length>0&&(<><div className="sh" style={{color:"#1d4ed8"}}>📦 Disponibles <span className="sh-cnt">{avail.length}</span></div>{avail.map(o=><OrdCard key={o.id} o={o} onClick={()=>onSel(o)}/>)}</>)}
+  </div>);
+}
+
+function EmptyState({text}){return(<div className="empty"><span className="empty-ic">🌿</span><div className="empty-txt">{text}</div></div>);}
+
+/* ══════════════════════════════════════════════════
+   📺 MODO TV — Panel general para el televisor del taller
+   • Reloj en tiempo real
+   • Todos los pedidos activos con colores por estado
+   • Paginación automática cada 8 segundos
+   • Alerta visual + sonido cuando entra pedido nuevo
+   • Barra de entregados hoy en la parte inferior
+══════════════════════════════════════════════════ */
+function TVCard({ o }) {
+  const [now, setNow] = React.useState(Date.now());
+  const cfg = SC[o.status] || SC.pendiente;
+
+  /* Timer en vivo — actualiza cada 30 seg */
+  React.useEffect(() => {
+    const iv = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(iv);
+  }, []);
+
+  const elapsed   = o.finishedAt ? o.finishedAt - o.createdAt : now - o.createdAt;
+  const timerLabel = o.finishedAt
+    ? "✓ Elaborado en " + formatTime(o.finishedAt - o.createdAt)
+    : "⏱ " + formatTime(elapsed) + " transcurridos";
+  const timerClass = o.finishedAt ? "done" : "running";
+
+  return (
+    <div className={"tv-card" + (o.urgente ? " tv-urg" : "") + " tv-" + o.status}>
+      <div className="tv-status-strip" style={{ background: cfg.dot }} />
+
+      <div className="tv-card-head">
+        <span className="tv-badge" style={{ color: cfg.color, background: cfg.bg }}>
+          <span style={{ width: ".6vw", height: ".6vw", borderRadius: "50%", background: cfg.dot, display: "inline-block", marginRight: ".3vw" }} />
+          {cfg.label}
+        </span>
+        {o.urgente && <span className="tv-urg-pill">⚡ URGENTE</span>}
+      </div>
+
+      <div className="tv-prod-name">{o.productName}</div>
+
+      <div className="tv-card-info">
+        <div className="tv-info-row">👤 <strong>{o.clientName}</strong></div>
+        <div className="tv-info-row">✂️ <strong>{o.decorator}</strong></div>
+        <div className="tv-info-row">⏰ <strong>{o.deliveryTime || "Flexible"}</strong></div>
+        <div className="tv-info-row">🛵 <strong>{o.deliveryPerson || "Por asignar"}</strong></div>
+      </div>
+
+      {o.notes && <div className="tv-note-tv">📝 "{o.notes}"</div>}
+
+      <div className={"tv-timer " + timerClass}>{timerLabel}</div>
+    </div>
+  );
+}
+
+function TVView({ orders, onExit }) {
+  const [now,      setNow]      = React.useState(new Date());
+  const [page,     setPage]     = React.useState(0);
+  const [alert,    setAlert]    = React.useState(null);
+  const prevLen = React.useRef(0);
+
+  /* Reloj — actualiza cada segundo */
+  React.useEffect(() => {
+    const iv = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(iv);
+  }, []);
+
+  /* Pedidos activos (excluyendo entregados) ordenados por urgencia y estado */
+  const active = React.useMemo(() =>
+    orders
+      .filter(o => o.status !== "entregado" && isToday(o.createdAt))
+      .sort((a, b) => {
+        if (a.urgente && !b.urgente) return -1;
+        if (!a.urgente && b.urgente) return 1;
+        return STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status);
+      }),
+    [orders]
+  );
+
+  /* Pedidos entregados hoy para la barra inferior */
+  const delivered = orders.filter(o => o.status === "entregado" && isToday(o.createdAt));
+
+  /* Estadísticas del día */
+  const stats = [
+    { key:"pendiente",     label:"Pendientes" },
+    { key:"en_produccion", label:"En taller" },
+    { key:"listo",         label:"Listos" },
+    { key:"en_camino",     label:"En ruta" },
+    { key:"entregado",     label:"Entregados" },
+  ].map(s => ({ ...s, ...SC[s.key], count: orders.filter(o => o.status === s.key && isToday(o.createdAt)).length }))
+   .filter(s => s.count > 0);
+
+  /* Paginación automática cada 8 segundos */
+  const PER_PAGE   = 6;
+  const totalPages = Math.max(1, Math.ceil(active.length / PER_PAGE));
+  const pageItems  = active.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
+
+  React.useEffect(() => {
+    if (totalPages <= 1) { setPage(0); return; }
+    const iv = setInterval(() => setPage(p => (p + 1) % totalPages), 8000);
+    return () => clearInterval(iv);
+  }, [totalPages]);
+
+  /* Detectar pedido nuevo → alerta visual + sonido */
+  React.useEffect(() => {
+    if (prevLen.current > 0 && active.length > prevLen.current) {
+      const newest = active[0];
+      setAlert(newest);
+      playChime(newest?.urgente ? "alert" : "new");
+      setTimeout(() => setAlert(null), 4000);
+    }
+    prevLen.current = active.length;
+  }, [active.length]);
+
+  /* Reloj formateado */
+  const timeStr = now.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const dateStr = now.toLocaleDateString("es-CO",  { weekday: "long", day: "numeric", month: "long" });
+
+  /* Clase del grid según cantidad de cards */
+  const gridClass = "tv-g-" + Math.min(pageItems.length, 6);
+
+  return (
+    <div className="tv-wrap">
+      {alert && (
+        <div className="tv-new-alert">
+          🌸 NUEVO PEDIDO — {alert.productName}{alert.urgente ? " ⚡ URGENTE" : ""}
+        </div>
+      )}
+
+      {/* HEADER: logo + nombre + reloj */}
+      <div className="tv-hdr">
+        <div className="tv-brand">
+          <img src={LIZ_LOGO} className="tv-logo" onError={e => e.target.style.display="none"} alt="" />
+          <div>
+            <div className="tv-hdr-name">Floristería Liz — Panel de Producción</div>
+            <div className="tv-hdr-sub" style={{ textTransform:"capitalize" }}>{dateStr}</div>
+          </div>
+        </div>
+        <div className="tv-clock">{timeStr}</div>
+      </div>
+
+      {/* STATS + paginación */}
+      <div className="tv-stats-bar">
+        {stats.map(s => (
+          <div key={s.key} className="tv-stat-item">
+            <span className="tv-stat-dot" style={{ background: s.dot }} />
+            <span className="tv-stat-lbl">{s.label}</span>
+            <span className="tv-stat-n">{s.count}</span>
+          </div>
+        ))}
+        {totalPages > 1 && (
+          <div className="tv-pager">
+            {Array.from({ length: totalPages }).map((_, i) => (
+              <div key={i} className={"tv-pager-dot" + (i === page ? " on" : "")} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* GRID de pedidos */}
+      {active.length === 0 ? (
+        <div className="tv-empty">
+          <div className="tv-empty-ic">✅</div>
+          <div className="tv-empty-txt">Sin pedidos activos — ¡Todo al día!</div>
+        </div>
+      ) : (
+        <div className={"tv-grid " + gridClass}>
+          {pageItems.map(o => <TVCard key={o.id} o={o} />)}
+        </div>
+      )}
+
+      {/* BARRA inferior — entregados hoy */}
+      {delivered.length > 0 && (
+        <div className="tv-done-bar">
+          <span className="tv-done-lbl">✅ Entregados hoy: {delivered.length}</span>
+          {delivered.slice(0, 6).map(o => (
+            <span key={o.id} className="tv-done-item">
+              {o.productName} → 🛵 {o.deliveryPerson || "—"}
+              {o.finishedAt && <span style={{ marginLeft: ".4vw", color: "#22c55e" }}>({formatTime(o.finishedAt - o.createdAt)})</span>}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Botón salir — muy discreto, esquina inferior derecha */}
+      <button type="button" className="tv-exit-btn" onClick={onExit}>✕ Salir TV</button>
+    </div>
+  );
+}
+
+const root=ReactDOM.createRoot(document.getElementById("root"));
+root.render(<FloristeriaLizApp/>);
+
+</script>
+</body>
+</html>
